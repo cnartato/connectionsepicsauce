@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connections Game</title>
+  <style>
+    html, body {
+      font-family: sans-serif;
+      font-weight: bolder;
+      text-align: center;
+      margin: 0;
+    height: 100%;
+      padding: 0;
+      box-sizing: border-box;
+      display:flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    #groups {
+      max-width: 440px;
+      margin: 0 auto 10px;
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+    .box
+    {
+        border-radius: 5px;
+        padding: 4px
+    }
+    h1 
+    {
+        margin: 0
+    }
+    /* .group-container {
+      margin-bottom: 10px;
+    }
+    .group-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .group-box {    
+        display: flex;
+        padding: 10px;
+    } */
+    /* .group-box span {
+      flex: 1;
+      text-align: center;
+      background: rgba(255,255,255,0.3);
+      margin: 0 5px;
+      border-radius: 6px;
+      line-height: 100px;
+      height: 100px;
+      font-weight: bold;
+      min-width: 80px;
+    } */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 10px;
+      max-width: 440px;
+      margin: 0 auto;
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+    .tile {
+      background: #fff;
+      border: 2px solid #ccc;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+      box-sizing: border-box;
+      font-size: 1rem;
+      user-select: none;
+    }
+    .tile.selected {
+      background: #cce5ff;
+    }
+    .tile.grouped {
+      pointer-events: none;
+    }
+    #message {
+      margin: 10px;
+      font-weight: bold;
+    }
+    .btn {
+      margin: 10px 5px;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Connections Game</h1>
+  <div id="groups"></div>
+  <div class="board"></div>
+  <div id="message"></div>
+  <div>
+  <button class="btn" onclick="submitGroup()">Submit</button>
+  <button class="btn" onclick="resetGame()">Reset</button>
+  </div>
+
+  <script>
+    const correctGroups = [
+      ['Gyatt', 'Holy', 'Zoinks', 'Word'],
+      ['Bakery', 'Store', 'Food Bank', 'Pizza Hut'],
+      ['Pizza', 'Monitor', 'Puppet', 'Bear'],
+      ['Skibidi', 'Wall Hung', 'One Piece', 'Chair Height']
+    ];
+
+    const groupNames = ['Exclaimations for virgins',  'places to get bread','stuff from five night feddy', 'toilet types'];
+    const groupColors = ['lightblue','yellow', 'lightgreen', 'purple']
+
+    const allWords = correctGroups.flat();
+
+    let shuffled = [...allWords].sort(() => Math.random() - 0.5);
+    let selected = [];
+    let grouped = [];
+    let solvedGroups = [];
+
+    const board = document.querySelector('.board');
+    const message = document.getElementById('message');
+    const groupsContainer = document.getElementById('groups');
+
+    function renderBoard() {
+      board.innerHTML = '';
+      shuffled.forEach(word => {
+        if (!grouped.includes(word)) {
+          const tile = document.createElement('div');
+          tile.textContent = word;
+          tile.className = 'tile';
+          if (selected.includes(word)) tile.classList.add('selected');
+          tile.onclick = () => selectTile(word);
+          board.appendChild(tile);
+        }
+      });
+      renderGroups();
+    }
+
+    function renderGroups() {
+      groupsContainer.innerHTML = '';
+      solvedGroups.forEach(group => {
+        const container = document.createElement('div');
+        container.className = 'box';
+
+        const groupIndex = correctGroups.findIndex(correctGroup =>
+          correctGroup.every(word => group.includes(word)) &&
+          group.every(word => correctGroup.includes(word))
+        );
+
+        const groupName = groupNames[groupIndex];
+        const color = groupColors[groupIndex];
+
+        const title = document.createElement('div');
+        title.className = 'group-title';
+        title.textContent = groupName;
+
+        const box = document.createElement('div');
+        box.className = 'board';
+        container.style.backgroundColor = color;
+
+        group.forEach(word => {
+          const span = document.createElement('div');
+          span.className ='tile'
+          span.textContent = word;
+          box.appendChild(span);
+        });
+
+        container.appendChild(title);
+        container.appendChild(box);
+        groupsContainer.appendChild(container);
+      });
+    }
+
+    function selectTile(word) {
+      if (grouped.includes(word)) return;
+      if (selected.includes(word)) {
+        selected = selected.filter(w => w !== word);
+      } else {
+        if (selected.length < 4) selected.push(word);
+      }
+      renderBoard();
+    }
+
+    function submitGroup() {
+      if (selected.length !== 4) {
+        message.textContent = 'pick 4';
+        return;
+      }
+      const found = correctGroups.find(group =>
+        selected.every(word => group.includes(word)) &&
+        group.every(word => selected.includes(word))
+      );
+      if (found) {
+        // message.textContent = 'yeag';
+        grouped.push(...selected);
+        solvedGroups.push([...selected]);
+      } else {
+        message.textContent = 'noug';
+      }
+      selected = [];
+      renderBoard();
+    }
+
+    function resetGame() {
+      shuffled = [...allWords].sort(() => Math.random() - 0.5);
+      selected = [];
+      grouped = [];
+      solvedGroups = [];
+      message.textContent = '';
+      renderBoard();
+    }
+
+    renderBoard();
+  </script>
+</body>
+</html>
